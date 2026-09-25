@@ -1,22 +1,668 @@
-<h1>시온이의 방탈출 카페</h1>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<p>비밀번호를 입력하세요</p>
+  <title>🔒 다이얼 비밀번호</title>
 
-<input type = "text">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-<button>확인</button>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, #ffffff 0%, #eef1f5 60%, #dfe3e8 100%);
+      color: #222;
+      overflow-x: hidden;
+    }
 
-<style>
-body{
-background:black;
-color:white;
-text-align:center;
-}
+    .container {
+      width: min(92vw, 420px);
+      text-align: center;
+      padding: 25px 15px 35px;
+    }
 
-button{
-background:white;
-color:black;
-padding: 15px 40px;
-border~radius: 10px;
-}
-</style>
+    h1 {
+      font-size: clamp(24px, 7vw, 34px);
+      margin: 0 0 8px;
+    }
+
+    .description {
+      color: #666;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    /* 다이얼 */
+    .dial-wrapper {
+      position: relative;
+      width: min(82vw, 330px);
+      height: min(82vw, 330px);
+      margin: 0 auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.15),
+        inset 0 0 0 2px #ddd;
+    }
+
+    /* 중앙 숫자 */
+    .number-display {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #222;
+      color: white;
+      font-size: 42px;
+      font-weight: bold;
+      box-shadow:
+        0 5px 15px rgba(0,0,0,0.25),
+        inset 0 0 0 4px #444;
+      pointer-events: none;
+    }
+
+    .instruction {
+      margin-top: 15px;
+      color: #777;
+      font-size: 14px;
+    }
+
+    /* 입력된 비밀번호 */
+    .password-box {
+      margin: 20px auto 10px;
+      display: flex;
+      justify-content: center;
+      gap: 9px;
+    }
+
+    .dot {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #333;
+      border-radius: 50%;
+      background: transparent;
+      transition: 0.2s;
+    }
+
+    .dot.active {
+      background: #333;
+      transform: scale(1.15);
+    }
+
+    /* 버튼 */
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 13px 22px;
+      font-size: 17px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    button:active {
+      transform: scale(0.94);
+    }
+
+    #checkButton {
+      background: #222;
+    }
+
+    #resetButton {
+      background: #999;
+    }
+
+    /* 메시지 */
+    #message {
+      min-height: 32px;
+      margin-top: 20px;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .success {
+      color: #159447;
+    }
+
+    .error {
+      color: #d93025;
+    }
+
+    /* 열쇠 */
+    #key {
+      display: none;
+      margin: 25px auto 0;
+      animation: keyAppear 0.7s ease-out;
+    }
+
+    .key-icon {
+      font-size: 100px;
+      line-height: 1;
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,0.2));
+    }
+
+    .key-text {
+      margin-top: 12px;
+      color: #333;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    @keyframes keyAppear {
+      0% {
+        opacity: 0;
+        transform: scale(0.3) rotate(-20deg);
+      }
+
+      70% {
+        transform: scale(1.15) rotate(5deg);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(0);
+      }
+    }
+
+    @media (max-height: 650px) {
+      .container {
+        padding-top: 10px;
+        padding-bottom: 15px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .description {
+        margin-bottom: 10px;
+      }
+
+      .dial-wrapper {
+        width: min(65vh, 300px);
+        height: min(65vh, 300px);
+      }
+
+      .key-icon {
+        font-size: 70px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <h1>🔒 다이얼 비밀번호</h1>
+
+    <div class="description">
+      다이얼을 손가락으로 돌려 비밀번호를 입력하세요.
+    </div>
+
+    <div class="dial-wrapper" id="dialWrapper">
+      <canvas id="dialCanvas" width="330" height="330"></canvas>
+      <div class="number-display" id="numberDisplay">0</div>
+    </div>
+
+    <div class="instruction">
+      원하는 숫자에서 손가락을 떼세요.
+    </div>
+
+    <!-- 비밀번호 표시 -->
+    <div class="password-box" id="passwordBox">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <div class="buttons">
+      <button id="resetButton">↻ 다시 입력</button>
+      <button id="checkButton">🔓 확인</button>
+    </div>
+
+    <div id="message"></div>
+
+    <!-- 정답일 때 나타나는 열쇠 -->
+    <div id="key">
+      <div class="key-icon">🔑</div>
+      <div class="key-text">
+        축하합니다!<br>
+        당신에게 열쇠가 쥐어졌습니다.
+        <br><br>
+        열쇠는 컴퓨터 본체 밑에 있습니다.
+      </div>
+    </div>
+
+  </main>
+
+<script>
+  const canvas = document.getElementById("dialCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const dialWrapper = document.getElementById("dialWrapper");
+  const numberDisplay = document.getElementById("numberDisplay");
+  const passwordBox = document.getElementById("passwordBox");
+  const message = document.getElementById("message");
+  const key = document.getElementById("key");
+
+  const dots = document.querySelectorAll(".dot");
+
+  const SIZE = 330;
+  const CENTER = SIZE / 2;
+  const RADIUS = 145;
+
+  // 정답
+  const PASSWORD = "160402";
+
+  let currentNumber = 0;
+  let entered = [];
+
+  let currentAngle = -Math.PI / 2;
+  let previousPointerAngle = null;
+  let isDragging = false;
+
+  /*
+    다이얼 그리기
+  */
+  function drawDial() {
+
+    ctx.clearRect(0, 0, SIZE, SIZE);
+
+    // 바깥 원
+    const gradient = ctx.createRadialGradient(
+      CENTER,
+      CENTER,
+      30,
+      CENTER,
+      CENTER,
+      RADIUS
+    );
+
+    gradient.addColorStop(0, "#ffffff");
+    gradient.addColorStop(0.7, "#f4f4f4");
+    gradient.addColorStop(1, "#d8d8d8");
+
+    ctx.beginPath();
+    ctx.arc(CENTER, CENTER, RADIUS, 0, Math.PI * 2);
+
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#333";
+    ctx.stroke();
+
+    /*
+      숫자 0~9
+    */
+    for (let i = 0; i < 10; i++) {
+
+      const angle =
+        -Math.PI / 2 +
+        i * (Math.PI * 2 / 10);
+
+      const x =
+        CENTER +
+        Math.cos(angle) * 112;
+
+      const y =
+        CENTER +
+        Math.sin(angle) * 112;
+
+      ctx.save();
+
+      ctx.translate(x, y);
+
+      ctx.font = "bold 25px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      // 선택된 숫자 강조
+      if (i === currentNumber) {
+        ctx.fillStyle = "#e53935";
+      } else {
+        ctx.fillStyle = "#333";
+      }
+
+      ctx.fillText(i, 0, 0);
+
+      ctx.restore();
+    }
+
+    /*
+      현재 선택 위치 표시
+    */
+    const selectedAngle =
+      -Math.PI / 2 +
+      currentNumber * (Math.PI * 2 / 10);
+
+    const markerX =
+      CENTER + Math.cos(selectedAngle) * 132;
+
+    const markerY =
+      CENTER + Math.sin(selectedAngle) * 132;
+
+    ctx.beginPath();
+    ctx.arc(markerX, markerY, 8, 0, Math.PI * 2);
+
+    ctx.fillStyle = "#e53935";
+    ctx.fill();
+
+    /*
+      중앙 회전축
+    */
+    ctx.beginPath();
+    ctx.arc(CENTER, CENTER, 32, 0, Math.PI * 2);
+
+    ctx.fillStyle = "#222";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(CENTER, CENTER, 25, 0, Math.PI * 2);
+
+    ctx.strokeStyle = "#555";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  /*
+    화면 좌표 → 각도
+  */
+  function getPointerAngle(event) {
+
+    const rect = canvas.getBoundingClientRect();
+
+    let x;
+    let y;
+
+    if (event.touches && event.touches.length > 0) {
+      x = event.touches[0].clientX;
+      y = event.touches[0].clientY;
+    } else {
+      x = event.clientX;
+      y = event.clientY;
+    }
+
+    const canvasX =
+      (x - rect.left) *
+      (SIZE / rect.width);
+
+    const canvasY =
+      (y - rect.top) *
+      (SIZE / rect.height);
+
+    return Math.atan2(
+      canvasY - CENTER,
+      canvasX - CENTER
+    );
+  }
+
+  /*
+    각도 차이를 -PI ~ PI로 정리
+  */
+  function normalizeAngle(angle) {
+
+    while (angle > Math.PI) {
+      angle -= Math.PI * 2;
+    }
+
+    while (angle < -Math.PI) {
+      angle += Math.PI * 2;
+    }
+
+    return angle;
+  }
+
+  /*
+    손가락 시작
+  */
+  function startDial(event) {
+
+    event.preventDefault();
+
+    isDragging = true;
+
+    previousPointerAngle =
+      getPointerAngle(event);
+  }
+
+  /*
+    손가락 이동
+  */
+  function moveDial(event) {
+
+    if (!isDragging) return;
+
+    event.preventDefault();
+
+    const newAngle =
+      getPointerAngle(event);
+
+    let difference =
+      normalizeAngle(
+        newAngle - previousPointerAngle
+      );
+
+    /*
+      다이얼 회전
+    */
+    currentAngle += difference;
+
+    previousPointerAngle = newAngle;
+
+    /*
+      각도를 0~9 숫자로 변환
+    */
+    let number =
+      Math.round(
+        (
+          (currentAngle + Math.PI / 2) /
+          (Math.PI * 2)
+        ) * 10
+      );
+
+    number =
+      ((number % 10) + 10) % 10;
+
+    currentNumber = number;
+
+    numberDisplay.textContent =
+      currentNumber;
+
+    drawDial();
+  }
+
+  /*
+    손가락 떼기
+  */
+  function endDial(event) {
+
+    if (!isDragging) return;
+
+    event.preventDefault();
+
+    isDragging = false;
+    previousPointerAngle = null;
+
+    /*
+      숫자 입력
+    */
+    if (entered.length < 6) {
+
+      entered.push(currentNumber);
+
+      updatePasswordDisplay();
+    }
+  }
+
+  /*
+    입력된 숫자 표시
+  */
+  function updatePasswordDisplay() {
+
+    dots.forEach((dot, index) => {
+
+      if (index < entered.length) {
+        dot.classList.add("active");
+      } else {
+        dot.classList.remove("active");
+      }
+
+    });
+  }
+
+  /*
+    비밀번호 확인
+  */
+  function checkPassword() {
+
+    const input =
+      entered.join("");
+
+    if (input === PASSWORD) {
+
+      message.textContent =
+        "🎉 비밀번호가 맞았습니다!";
+
+      message.className = "success";
+
+      key.style.display = "block";
+
+    } else {
+
+      message.textContent =
+        "❌ 비밀번호가 틀렸습니다.";
+
+      message.className = "error";
+
+      key.style.display = "none";
+    }
+  }
+
+  /*
+    초기화
+  */
+  function resetPassword() {
+
+    entered = [];
+
+    currentNumber = 0;
+
+    currentAngle = -Math.PI / 2;
+
+    message.textContent = "";
+
+    message.className = "";
+
+    key.style.display = "none";
+
+    numberDisplay.textContent = "0";
+
+    updatePasswordDisplay();
+
+    drawDial();
+  }
+
+  /*
+    터치 이벤트
+  */
+  dialWrapper.addEventListener(
+    "touchstart",
+    startDial,
+    { passive: false }
+  );
+
+  dialWrapper.addEventListener(
+    "touchmove",
+    moveDial,
+    { passive: false }
+  );
+
+  dialWrapper.addEventListener(
+    "touchend",
+    endDial,
+    { passive: false }
+  );
+
+  /*
+    PC에서도 테스트 가능하도록 마우스 지원
+  */
+  dialWrapper.addEventListener(
+    "mousedown",
+    startDial
+  );
+
+  window.addEventListener(
+    "mousemove",
+    moveDial
+  );
+
+  window.addEventListener(
+    "mouseup",
+    endDial
+  );
+
+  /*
+    버튼
+  */
+  document
+    .getElementById("checkButton")
+    .addEventListener(
+      "click",
+      checkPassword
+    );
+
+  document
+    .getElementById("resetButton")
+    .addEventListener(
+      "click",
+      resetPassword
+    );
+
+  /*
+    처음 화면
+  */
+  drawDial();
+  updatePasswordDisplay();
+
+</script>
+
+</body>
+</html>
